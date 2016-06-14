@@ -31,58 +31,14 @@ html, body {
 }
 </style>
 
-<script>
-(() => {
-
-const __DEV__ = true;
-
-const getSelection = () => window.getSelection();
-const createRange = () => document.createRange();
-
-function restorableSelection (node) {
-	let selection, previousRange, newRange;
-	selection = getSelection();
-
-	try {
-		previousRange = selection.getRangeAt(0);
-	} catch (err) {
-		if (err.name === 'IndexSizeError') {
-			if (__DEV__) {
-				console.debug('Index size error encountered');
-			}
-			// Nothing was previously selected
-			// Ignore this error
-		} else {
-			throw err;
-		}
-	}
-
-	newRange = createRange();
-	newRange.selectNodeContents(node);
-	selection.removeAllRanges();
-	selection.addRange(newRange);
-
-	return function restoreSelection () {
-		selection.removeAllRanges();
-		if (previousRange) {
-			selection.addRange(previousRange);
-		} else if (__DEV__) {
-			console.debug('No previous selection range to restore');
-		}
-	};
-}
-
-window.restorableSelection = restorableSelection;
-
-})();
-</script>
+<script src="restorable-selection.js"></script>
 
 <script>
 (() => {
 
 const button = document.getElementById('button');
 const content = document.getElementById('content');
-const setup = restorableSelection;
+const setup = window.restorableSelection;
 
 button.addEventListener('mouseover', () => {
 	const teardown = setup(content);
