@@ -38,12 +38,11 @@ const __DEV__ = true;
 
 const getSelection = () => window.getSelection();
 const createRange = () => document.createRange();
-const destroyRange = (selection) => selection.removeAllRanges();
-const addRange = (selection, range) => selection.addRange(range);
 
 function restorableSelection (node) {
 	let selection, previousRange, newRange;
 	selection = getSelection();
+
 	try {
 		previousRange = selection.getRangeAt(0);
 	} catch (err) {
@@ -57,15 +56,16 @@ function restorableSelection (node) {
 			throw err;
 		}
 	}
+
 	newRange = createRange();
 	newRange.selectNodeContents(node);
-	destroyRange(selection);
-	addRange(selection, newRange);
+	selection.removeAllRanges();
+	selection.addRange(newRange);
 
 	return function restoreSelection () {
-		destroyRange(selection);
+		selection.removeAllRanges();
 		if (previousRange) {
-			addRange(selection, previousRange);
+			selection.addRange(previousRange);
 		} else if (__DEV__) {
 			console.debug('No previous selection range to restore');
 		}
