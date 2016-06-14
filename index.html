@@ -1,0 +1,96 @@
+<!doctype html>
+<meta charset="utf-8">
+
+<title>Restore selection</title>
+
+<div id="container">
+	<button type="button" id="button">Copy to clipboard</button>
+	<p>Some unrelated content that can be highlighted.</p>
+	<textarea id="content">Lorem ipsum dolor sit amet</textarea>
+</div>
+
+<style>
+html, body {
+	margin: 0;
+	padding: 0;
+}
+#container {
+	padding: 1em;
+}
+#button {
+	padding: 1em;
+}
+#content {
+	width: 100%;
+	height: 500px;
+	margin: 0;
+	padding: 1em;
+	border: none;
+	box-shadow: inset 0 0 0 1px #ccc;
+	box-sizing: border-box;
+}
+</style>
+
+<script>
+(() => {
+
+const __DEV__ = true;
+
+const getSelection = () => window.getSelection();
+const createRange = () => document.createRange();
+const destroyRange = (selection) => selection.removeAllRanges();
+const addRange = (selection, range) => selection.addRange(range);
+
+function restorableSelection (node) {
+	let selection, previousRange, newRange;
+	selection = getSelection();
+	try {
+		previousRange = selection.getRangeAt(0);
+	} catch (err) {
+		if (err.name === 'IndexSizeError') {
+			if (__DEV__) {
+				console.debug('Index size error encountered');
+			}
+			// Nothing was previously selected
+			// Ignore this error
+		} else {
+			throw err;
+		}
+	}
+	newRange = createRange();
+	newRange.selectNodeContents(node);
+	destroyRange(selection);
+	addRange(selection, newRange);
+
+	return function restoreSelection () {
+		destroyRange(selection);
+		if (previousRange) {
+			addRange(selection, previousRange);
+		} else if (__DEV__) {
+			console.debug('No previous selection range to restore');
+		}
+	};
+}
+
+window.restorableSelection = restorableSelection;
+
+})();
+</script>
+
+<script>
+(() => {
+
+const button = document.getElementById('button');
+const content = document.getElementById('content');
+const setup = restorableSelection;
+
+button.addEventListener('mouseover', () => {
+	const teardown = setup(content);
+	button.addEventListener('mouseout', function handler () {
+		teardown();
+		button.removeEventListener('mouseout', handler);
+	});
+});
+
+})();
+</script>
